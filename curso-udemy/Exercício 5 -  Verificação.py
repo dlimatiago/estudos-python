@@ -6,6 +6,7 @@ print(f'Número com resto 5:     {color["green"]}     {color["close"]}\n'
       f'Número com outro resto: {color["red"]}     {color["close"]}')
 for number in range(1000, 2001):
     if number % 11 == 5:
-        print(f'{ncolor["green"]}{number}{ncolor["close"]}')
+        print(f'{ncolor["green"]}{number}{ncolor["close"]}', end=' ')
     else:
-        print(f'{ncolor["red"]}{number}{ncolor["close"]}')
+        print(f'{ncolor["red"]}{number}{ncolor["close"]}', end=' ')
+print()
