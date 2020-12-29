@@ -27,7 +27,7 @@ create table produtos(
     nome varchar(100) not null,
     ingredientes varchar(1000),
     grupo varchar(100),
-    preco decimal(3,2)
+    preco decimal(5,2)
 );
 
 /**
