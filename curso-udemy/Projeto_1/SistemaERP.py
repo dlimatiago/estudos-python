@@ -16,17 +16,25 @@ def connection():
     return con
 
 
-def data_validation(phrase, typo='int'):
+def data_validation(phrase, typo='int', options=None):
     while True:
         try:
             if typo == 'int':
                 answer = int(input(phrase))
             elif typo == 'float':
                 answer = float(input(phrase))
+            elif typo == 'str':
+                answer = phrase
         except ValueError:
             print('\n🚫 🚫 🚫 Tipo de dado incorreto 🚫 🚫 🚫\n')
             continue
         else:
+            if options is not None:
+                while True:
+                    if answer in options:
+                        break
+                    else:
+                        print('\n🚫 🚫 🚫 Opção inválida 🚫 🚫 🚫\n')
             return answer
 
 
@@ -53,7 +61,7 @@ def login_singup():
     user_exists = 0
     authenticaded = superuser = False
 
-    #     Como  decision é de escopo global e só será usada para leitura, não é necessária a declaração na função
+    # Como  decision é de escopo global e só será usada para leitura, não é necessária a declaração na função
     if decision == 1:
         user, password = input('✉ Digite seu login: '), input('🔑 Digite sua senha: ')
 
@@ -123,22 +131,43 @@ def delete_product():
         print('\n🚮 Produto deletado com sucesso!\n')
 
 
-def orderlist():
-    pass
+def orderslist():
+    orders, choice = [], 0
+
+    while choice != 2:
+        orders.clear()  # Não acumula os pedidos
+        orderlist = query('select * from pedidos;', 'fetchall')
+
+        orders = orderlist[:]
+
+        if len(orders) != 0:
+            print('📑📑📑📑📑📑📑📑📑📑📑📑📑📑 Lista de Pedidos 📑📑📑📑📑📑📑📑📑📑📑📑📑📑'.center(101))
+            print('-' * 121)
+            print(f' Id           Nome               Grupo          Observações                Ingredientes                Local de Entrega')
+            print('----- --------------------    -----------   -------------------    -----------------------------    ---------------------')
+            for i in orders:
+                subs1 = '-' if not i["ingredientes"] else i["ingredientes"]
+                subs2 = '-' if not i["localEntrega"] else i["localEntrega"]
+                subs3 = '-' if not i["observacoes"] else i["observacoes"]
+                print(f'{i["id"]:^5} {i["nome"]:^20}    {i["grupo"]:^10}     {subs3:^15} {subs1:^40} {subs2:^18}')
+            print('-' * 121)
+
+        else:
+            print('⚠️Nenhum pedido feito ⚠️')
+
+        choice = data_validation('\n✅ Pedido entregue [1]\n🔙 Voltar [2]\n\n▶ ', options=(1, 2))
+        print()
+
+        if choice == 1:
+            orderdoneId = data_validation('🆔 Informe o ID do pedido entregue: ')
+            query(f'delete from pedidos where id = {orderdoneId}')
+            print('\n🆗 Pedido concluído 🆗\n')
 
 
 auth = False
 while not auth:
-    while True:
-        decision = data_validation('🔒 Login [1]\n📖 Novo cadastro [2]\n\n▶ ')
-        print()
-        if decision in (1, 2):
-            break
-        else:
-            print('\n🚫 🚫 🚫 Opção inválida 🚫 🚫 🚫\n')
-
+    decision = data_validation('🔒 Login [1]\n📖 Novo cadastro [2]\n\n▶ ', options=(1, 2))
     usersfound = query('select * from cadastros', 'fetchall')
-
     auth, SuperUser = login_singup()
 
 if auth:
@@ -148,28 +177,24 @@ if auth:
         while True:
             newdecision = data_validation('\n🚶  Sair do sistema [1]\n'
                                           '📝 Cadastrar produto [2]\n'
-                                          '📄 Listar produtos cadastrados [3]\n\n▶ ')
+                                          '📄 Listar produtos cadastrados [3]\n'
+                                          '📄 Listar pedidos [4]\n\n▶ ', options=(1, 2, 3, 4))
             print()
-            if newdecision in (1, 2, 3):
-                if newdecision == 1:
-                    break
-            else:
-                print('\n🚫 🚫 🚫 Opção inválida 🚫 🚫 🚫\n')
-                continue
-
-            if newdecision == 2:
+            if newdecision == 1:
+                break
+            elif newdecision == 2:
                 product_registration()
-
             elif newdecision == 3:
                 products_list()
                 while True:
-                    alter = input('\n🗑️ Sim remover algum produto [S]\n'
-                                  '↩  Não para voltar [N]\n\n▶').strip().lower()[:1]
-                    if alter in ('s', 'n'):
-                        if alter == 's':
-                            delete_product()
-                        break
+                    alter = data_validation('\n🗑️ Sim remover algum produto [S]\n'
+                                            '↩  Não para voltar [N]\n\n▶',
+                                            typo='str', options=('s', 'n')).strip().lower()[:1]
+                    if alter == 's':
+                        delete_product()
                     else:
-                        print('\n🚫 🚫 🚫 Opção inválida 🚫 🚫 🚫\n')
+                        break
+            elif newdecision == 4:
+                orderslist()
 
 print('Sistema Finalizado com sucesso!')
