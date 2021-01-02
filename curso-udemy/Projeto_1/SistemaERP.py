@@ -1,19 +1,6 @@
 import pymysql.cursors
 import pymysql as sql
-
-
-def connection():
-    con = sql.connect(
-        host='localhost',
-        port=3308,
-        user='root',
-        password='4321.',
-        db='erp',
-        charset='utf8mb4',
-        cursorclass=pymysql.cursors.DictCursor
-    )
-
-    return con
+from matplotlib import pyplot as plt
 
 
 def data_validation(phrase, typo='int', options=None):
@@ -24,7 +11,7 @@ def data_validation(phrase, typo='int', options=None):
             elif typo == 'float':
                 answer = float(input(phrase))
             elif typo == 'str':
-                answer = phrase
+                answer = input(phrase).strip().lower()[:1]
         except ValueError:
             print('\n🚫 🚫 🚫 Tipo de dado incorreto 🚫 🚫 🚫\n')
             continue
@@ -32,14 +19,23 @@ def data_validation(phrase, typo='int', options=None):
             if options is not None:
                 while True:
                     if answer in options:
-                        break
+                        return answer
                     else:
                         print('\n🚫 🚫 🚫 Opção inválida 🚫 🚫 🚫\n')
-            return answer
+                        break
+            continue
 
 
 def query(line, action='commit'):
-    connect = connection()
+    connect = sql.connect(
+        host='localhost',
+        port=3308,
+        user='root',
+        password='4321.',
+        db='erp',
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
+    )
     try:
         with connect.cursor() as cursor:
             cursor.execute(line)
@@ -52,6 +48,8 @@ def query(line, action='commit'):
                 return None
         elif action == 'fetchall':
             return cursor.fetchall()
+    except pymysql.err.ProgrammingError:
+        print('⛔ Erro na query ⛔')
     except:
         print('⛔ 📶 ⛔ Erro ao se comunicar com o banco de dados. Query não executada ⛔ 📶 ⛔')
 
@@ -63,7 +61,7 @@ def login_singup():
 
     # Como  decision é de escopo global e só será usada para leitura, não é necessária a declaração na função
     if decision == 1:
-        user, password = input('✉ Digite seu login: '), input('🔑 Digite sua senha: ')
+        user, password = input('\t✉ Digite seu login: '), input('\t🔑 Digite sua senha: ')
 
         for users in usersfound:
             values = users.values()
@@ -79,7 +77,7 @@ def login_singup():
 
     else:
         print('Bem-vindo ao sistema. Por favor, preencha os seus dados para se cadastrar ')
-        newuser, password = input('✉ Digite seu nome para login: '), input('🔑 Digite sua senha: ')
+        newuser, password = input('\t✉ Digite seu nome para login: '), input('\t🔑 Digite sua senha: ')
 
         for users in usersfound:
             values = users.values()
@@ -97,10 +95,10 @@ def login_singup():
 
 
 def product_registration():
-    product = input('📥 Informe o nome do produto: ')
-    ingridients = input('📝 Informe os ingredientes que compõem o produto: ')
-    group = input('🔠 Informe o grupo do produto: ')
-    price = data_validation('💲 Informe o preço do produto: ', 'float')
+    product = input('\t📥 Informe o nome do produto: ')
+    ingridients = input('\t📝 Informe os ingredientes que compõem o produto: ')
+    group = input('\t🔠 Informe o grupo do produto: ')
+    price = data_validation('\t💲 Informe o preço do produto: ', 'float')
 
     done = query(f'insert into produtos(nome, ingredientes, grupo, preco) '
                  f'values("{product}", "{ingridients}", "{group}", "{price}")')
@@ -125,7 +123,7 @@ def products_list():
 
 
 def delete_product():
-    idproduct = data_validation('🆔 Digite o id do produto a ser excluido: ')
+    idproduct = data_validation('\t🆔 Digite o id do produto a ser excluido: ')
     check = query(f'delete from produtos where id = {idproduct}')
     if check is not None:
         print('\n🚮 Produto deletado com sucesso!\n')
@@ -155,18 +153,48 @@ def orderslist():
         else:
             print('⚠️Nenhum pedido feito ⚠️')
 
-        choice = data_validation('\n✅ Pedido entregue [1]\n🔙 Voltar [2]\n\n▶ ', options=(1, 2))
+        choice = data_validation('\n[1] ✅ Pedido entregue\n[2] 🔙 Voltar\n\n▶ ', options=(1, 2))
         print()
 
         if choice == 1:
-            orderdoneId = data_validation('🆔 Informe o ID do pedido entregue: ')
+            orderdoneId = data_validation('\t🆔 Informe o ID do pedido entregue: ')
             query(f'delete from pedidos where id = {orderdoneId}')
             print('\n🆗 Pedido concluído 🆗\n')
 
 
+def statistics():
+    nameproducts = []
+    nameproducts.clear()
+
+    products = query('select * from produtos', 'fetchall')
+    sold = query('select * from estatisticaVendido', 'fetchall')
+
+    status = data_validation('\n\t🚪 Sair [0]\n'
+                             '\t📈 Estatísticas por nome do produto [1]\n'
+                             '\t📊 Estatísticas por grupo [2]\n\n\t▶ ', options=(0, 1, 2))
+    if status == 1:
+        status2 = data_validation('\n\t\t📈 Estatísticas por valor vendido [1]\n'
+                                  '\t\t📊 Estatísticas por quantidade unitária [2]\n\n\t\t▶ ', options=(1, 2))
+        if status2 == 1:
+            nameproducts = [i['nome'] for i in products]
+            amount = []
+            amount.clear()
+
+            for name in nameproducts:
+                earned = -1
+                for item in sold:
+                    if item['nome'] == name:
+                        earned += item['preco']
+                amount.append(0 if earned == -1 else earned + 1)
+        plt.plot(nameproducts, amount)
+        plt.ylabel('Quantidade vendida (R$)')
+        plt.xlabel('Nome dos produtos')
+        plt.show()
+
+
 auth = False
 while not auth:
-    decision = data_validation('🔒 Login [1]\n📖 Novo cadastro [2]\n\n▶ ', options=(1, 2))
+    decision = data_validation('[1] 🔒 Login\n[2] 📖 Novo cadastro\n\n▶ ', options=(1, 2))
     usersfound = query('select * from cadastros', 'fetchall')
     auth, SuperUser = login_singup()
 
@@ -175,10 +203,11 @@ if auth:
 
     if SuperUser:
         while True:
-            newdecision = data_validation('\n🚶  Sair do sistema [1]\n'
-                                          '📝 Cadastrar produto [2]\n'
-                                          '📄 Listar produtos cadastrados [3]\n'
-                                          '📄 Listar pedidos [4]\n\n▶ ', options=(1, 2, 3, 4))
+            newdecision = data_validation('\n[1] 🚶  Sair do sistema\n'
+                                          '[2] 📝 Cadastrar produto\n'
+                                          '[3] 📄 Listar produtos cadastrados\n'
+                                          '[4] 📄 Listar pedidos\n'
+                                          '[5] 📊 Estatísticas\n\n▶ ', options=(1, 2, 3, 4, 5))
             print()
             if newdecision == 1:
                 break
@@ -187,14 +216,16 @@ if auth:
             elif newdecision == 3:
                 products_list()
                 while True:
-                    alter = data_validation('\n🗑️ Sim remover algum produto [S]\n'
-                                            '↩  Não para voltar [N]\n\n▶',
-                                            typo='str', options=('s', 'n')).strip().lower()[:1]
+                    alter = data_validation('\n[S] 🗑️ Sim remover algum produto\n'
+                                            '[N] ↩  Não para voltar\n\n▶',
+                                            typo='str', options=('s', 'n'))
                     if alter == 's':
                         delete_product()
                     else:
                         break
             elif newdecision == 4:
                 orderslist()
+            else:
+                statistics()
 
 print('Sistema Finalizado com sucesso!')
