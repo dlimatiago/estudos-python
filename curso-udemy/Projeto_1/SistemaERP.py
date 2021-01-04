@@ -23,6 +23,8 @@ def data_validation(phrase, typo='int', options=None):
                     else:
                         print('\n🚫 🚫 🚫 Opção inválida 🚫 🚫 🚫\n')
                         break
+            else:
+                return answer
             continue
 
 
@@ -116,7 +118,7 @@ def products_list():
         print('----- --------------------   ----------     ---------    ----------------------------------------------')
         for i in products_in_db:
             subs = '-' if not i["ingredientes"] else i["ingredientes"]
-            print(f'{i["id"]:^5} {i["nome"]:^20}    {i["grupo"]:^10}     R${i["preco"]:<5,.2f} {subs:^50}')
+            print(f'{i["id"]:^5} {i["nome"]:^20}    {i["grupo"]:^10}     R${i["preco"]:>5,.2f} {subs:^50}')
         print('-' * 103)
     else:
         print('📦 Nenhum produto cadastrado 📦')
@@ -169,9 +171,9 @@ def statistics():
     products = query('select * from produtos', 'fetchall')
     sold = query('select * from estatisticaVendido', 'fetchall')
 
-    status = data_validation('\n\t🚪 Sair [0]\n'
-                             '\t📈 Estatísticas por nome do produto [1]\n'
-                             '\t📊 Estatísticas por grupo [2]\n\n\t▶ ', options=(0, 1, 2))
+    status = data_validation('\n\t[0] 🚪 Sair\n'
+                             '\t[1] 📈 Estatísticas por nome do produto\n'
+                             '\t[2] 📊 Estatísticas por grupo\n\n\t▶ ', options=(0, 1, 2))
     if status == 1:
         status2 = data_validation('\n\t\t📈 Estatísticas por valor vendido [1]\n'
                                   '\t\t📊 Estatísticas por quantidade unitária [2]\n\n\t\t▶ ', options=(1, 2))
@@ -186,10 +188,62 @@ def statistics():
                     if item['nome'] == name:
                         earned += item['preco']
                 amount.append(0 if earned == -1 else earned + 1)
-        plt.plot(nameproducts, amount)
-        plt.ylabel('Quantidade vendida (R$)')
-        plt.xlabel('Nome dos produtos')
-        plt.show()
+            plt.plot(nameproducts, amount)
+            plt.ylabel('Quantidade vendida (R$)')
+            plt.xlabel('Nome dos produtos')
+            plt.show()
+        else:
+            nameproducts2 = [i['nome'] for i in products]
+            nameproducts2 = sorted(set(nameproducts2))
+
+            quantities = []
+            quantities.clear()
+
+            for prods in nameproducts2:
+                units = 0
+                for unit in sold:
+                    if unit['nome'] == prods:
+                        units += 1
+                quantities.append(units)
+            plt.plot(nameproducts2, quantities)
+            plt.ylabel('Quantidade Vendida por Unidade')
+            plt.xlabel('Produtos')
+            plt.show()
+    else:
+        status2 = data_validation('\n\t\t📈 Estatísticas por valor vendido [1]\n'
+                                  '\t\t📊 Estatísticas por quantidade unitária [2]\n\n\t\t▶ ', options=(1, 2))
+        if status2 == 1:
+            namegroup = [i['grupo'] for i in products]
+            gain = []
+            gain.clear()
+
+            for name in namegroup:
+                earn = -1
+                for item in sold:
+                    if item['grupo'] == name:
+                        earn += item['preco']
+                gain.append(0 if earn == -1 else earn + 1)
+            plt.plot(namegroup, gain)
+            plt.ylabel('Quantidade vendida (R$)')
+            plt.xlabel('Grupo')
+            plt.show()
+        else:
+            namegroup2 = [i['grupo'] for i in products]
+            namegroup2 = sorted(set(namegroup2))
+
+            total = []
+            total.clear()
+
+            for group in namegroup2:
+                units = 0
+                for unit in sold:
+                    if unit['grupo'] == group:
+                        units += 1
+                total.append(units)
+            plt.plot(namegroup2, total)
+            plt.ylabel('Quantidade Vendida por Unidade')
+            plt.xlabel('Grupo')
+            plt.show()
 
 
 auth = False
