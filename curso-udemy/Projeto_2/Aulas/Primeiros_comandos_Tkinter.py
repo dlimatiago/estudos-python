@@ -13,7 +13,7 @@ janela.resizable(False, False)
 # bg altera a cor do fundo
 # fb altera a cor da fonte
 # Padx da um espaçamento no eixo x e Pady no eixo y
-# função grid() informa a posição do texto dada uma linha e coluna
+# função grid() é um gerenciador de layout
 Label(janela, text='Olá mundo!', bg='black', fg='white', padx=30, pady=30).grid(row=0, column=0)
 
 # A função mainloop tem que ser invocada para que a aplicação entre no modo de tratamento de eventos
