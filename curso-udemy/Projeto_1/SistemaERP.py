@@ -59,7 +59,7 @@ def query(line, action='commit'):
 def login_singup():
     global user
     user_exists = 0
-    authenticaded = superuser = False
+    authenticated = superuser = False
 
     # Como  decision é de escopo global e só será usada para leitura, não é necessária a declaração na função
     if decision == 1:
@@ -70,11 +70,11 @@ def login_singup():
             if user in values and password in values:
                 if 2 in values:
                     superuser = True
-                authenticaded = True
+                authenticated = True
                 break
             else:
-                authenticaded = False
-        if not authenticaded:
+                authenticated = False
+        if not authenticated:
             print('\n🚫 🚫 🚫 Login inválido. Senha ou nome de usuários não costam no banco de dados 🚫 🚫 🚫\n')
 
     else:
@@ -93,7 +93,7 @@ def login_singup():
             if check is not None:
                 print('\n✔ Usuário cadastrado com sucesso!\n')
 
-    return authenticaded, superuser
+    return authenticated, superuser
 
 
 def product_registration():
